@@ -26,24 +26,4 @@
             </p>
         </div>
     </div>
-    @if (count($results))
-        <div class="container rounded bg-white p-6 flex flex-col justify-center items-center max-w-4xl">
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                @foreach($results as $result)
-                     <div class="w-full p-1">
-                        <a
-                            class="flex flex-col items-center"
-                            style="cursor: pointer"
-                            target="_blank"
-                            href="{{ route('youtube', ['id' => $result['id']]) }}"
-                        >
-                            <img src="{{ $result['thumbnail'] }}" alt="{{ $result['title'] }}"
-                                 class="rounded-lg w-full" width="214" height="160"/>
-                            <p class="text-black text-sm font-bold mt-2 w-full">{{ trim(substr($result['title'], 0, 75)) }}</p>
-                        </a>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endif
 </div>

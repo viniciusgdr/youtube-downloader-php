@@ -31,13 +31,13 @@ class Search
                     'id' => $video['videoId'],
                     'title' => $video['title']['runs'][0]['text'],
                     'thumbnail' => $video['thumbnail']['thumbnails'][0]['url'],
-                    'duration' => $video['lengthText']['simpleText'],
+                    'duration' => $video['lengthText']['simpleText'] ?? $video['lengthText']['runs'][0]['text'] ?? null,
                     'channel' => [
                         'id' => $video['ownerText']['runs'][0]['navigationEndpoint']['browseEndpoint']['browseId'],
                         'name' => $video['ownerText']['runs'][0]['text'],
                         'thumbnail' => $video['channelThumbnailSupportedRenderers']['channelThumbnailWithLinkRenderer']['thumbnail']['thumbnails'][0]['url'],
                     ],
-                    'views' => $video['viewCountText']['simpleText'],
+                    'views' => $video['viewCountText']['simpleText'] ?? $video['viewCountText']['runs'][0]['text'] ?? null,
                     'uploaded' => $video['publishedTimeText']['simpleText'] ?? $video['publishedTimeText']['runs'][0]['text'] ?? null,
                 ];
             }

@@ -6,7 +6,7 @@ use App\Http\Controllers\Web\LoginController;
 use App\Http\Controllers\Web\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LogoutController;
-
+use App\Livewire\Youtube;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -24,6 +24,8 @@ Route::post('/login', [LoginController::class, 'form'])->name('login.form');
 
 Route::get('/register', [RegisterController::class, 'index'])->name('register');
 Route::post('/register', [RegisterController::class, 'form'])->name('register.form');
+
+Route::get('/youtube/{id}', Youtube::class)->name('youtube');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
