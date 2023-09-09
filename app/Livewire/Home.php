@@ -19,8 +19,11 @@ class Home extends Component
         ]);
 
         $this->loading = true;
-
         $youtube = new Search();
+        if ($youtube->isURL($this->search) && $youtube->getVideoId($this->search) !== '') {
+            $this->redirect('/youtube/' . $youtube->getVideoId($this->search));
+            return;
+        }
         $this->results = $youtube->YoutubeSearch($this->search);
         $this->loading = false;
     }

@@ -27,7 +27,7 @@
     </div>
 </nav>
 {{ $slot ?? '' }}
+{{ $scripts ?? '' }}
 @yield('content')
 </body>
-
 </html>

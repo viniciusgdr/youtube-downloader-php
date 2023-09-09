@@ -26,7 +26,7 @@
             </p>
         </div>
     </div>
-    @if (count($results))
+    @if (count($results) && !$loading)
         <div class="container rounded bg-white p-6 flex flex-col justify-center items-center max-w-4xl">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 @foreach($results as $result)

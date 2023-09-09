@@ -4,7 +4,7 @@ namespace App\Apis;
 
 use DOMDocument;
 
-function getstr($string, $start, $end, $i)
+function getstr($string, $start, $end, $i): string
 {
     $i++;
     $str = explode($start, $string);
@@ -47,22 +47,19 @@ class Search
 
     public function isURL(string $url): bool
     {
-        return filter_var($url, FILTER_VALIDATE_URL) !== false;
+        return preg_match('/^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/', $url);
     }
 
     public function getVideoId(string $url): string|null
     {
-        $url = parse_url($url);
-        if (isset($url['query'])) {
-            parse_str($url['query'], $query);
-            if (isset($query['v'])) {
-                return $query['v'];
-            }
+        if (!$this->isURL($url)) {
+            return null;
         }
-        return null;
+        preg_match('/^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/', $url, $matches);
+        return $matches[5];
     }
 
-    public function getVideoByID(string $id): array
+    public function getVideoInfo(string $id): array
     {
         $url = "https://www.youtube.com/watch?v=" . urlencode($id);
         $html = file_get_contents($url);
@@ -81,11 +78,66 @@ class Search
             'channel' => [
                 'id' => $video['channelId'],
                 'name' => $video['author'],
-                'thumbnail' => $video['authorThumbnails'][0]['url'] ?? null,
             ],
             'views' => $video['viewCount'],
             'uploaded' => $video['publishDate'] ?? null,
             'extra' => $json
+        ];
+    }
+
+    public function getDownload(string $id): array
+    {
+        $data = array(
+            "context" => array(
+                "client" => array(
+                    "clientName" => "ANDROID_EMBEDDED_PLAYER",
+                    "clientVersion" => "16.02"
+                )
+            ),
+            "videoId" => $id
+        );
+        $options = array(
+            'http' => array(
+                'header' => "Content-type: application/json\r\n",
+                'method' => 'POST',
+                'content' => json_encode($data)
+            )
+        );
+        $context = stream_context_create($options);
+        $result = file_get_contents("https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", false, $context);
+        if ($result === FALSE) {
+            return [];
+        }
+
+        $json = json_decode($result, true);
+        $formats = $json['streamingData']['formats'];
+        $adaptiveFormats = $json['streamingData']['adaptiveFormats'];
+        $adaptiveFormatsFiltered = array_filter($adaptiveFormats, function ($item) {
+            return isset($item['audioQuality']) && in_array($item['audioQuality'], ['AUDIO_QUALITY_LOW', 'AUDIO_QUALITY_MEDIUM', 'AUDIO_QUALITY_HIGH']);
+        });
+        $formats = array_merge($formats, $adaptiveFormatsFiltered);
+
+        $results = [];
+        foreach ($formats as $item) {
+            $results[] = [
+                'itag' => $item['itag'],
+                'url' => $item['url'],
+                'quality' => $item['qualityLabel'] ?? $item['audioQuality'] ?? $item['quality'] ?? null,
+                'type' => $item['mimeType'],
+                'extra' => $item
+            ];
+        }
+
+        $videos = array_filter($results, function ($item) {
+            return str_contains($item['type'], 'video');
+        });
+
+        $audios = array_filter($results, function ($item) {
+            return str_contains($item['type'], 'audio');
+        });
+        return [
+            'videos' => $videos,
+            'audios' => $audios,
         ];
     }
 }
