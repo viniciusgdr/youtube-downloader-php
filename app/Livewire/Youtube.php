@@ -45,7 +45,7 @@ class Youtube extends Component
             $this->infoVideo = [
                 'id' => $infoVideo['id'],
                 'title' => $infoVideo['title'],
-                'thumbnail' => stringContains($infoVideo['thumbnail'], '?') ? explode('?', $infoVideo['thumbnail'])[0] : $infoVideo['thumbnail'],
+                'thumbnail' => strpos($infoVideo['thumbnail'], '?') ? explode('?', $infoVideo['thumbnail'])[0] : $infoVideo['thumbnail'],
                 'channelName' => $infoVideo['channel']['name'] ?? '',
             ];
             $downloads = $youtube->getDownload($infoVideo['id']);
