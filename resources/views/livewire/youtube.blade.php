@@ -8,7 +8,7 @@
                 <div class="join w-full">
                     <input wire:model="search" type="text" class="input input-bordered join-item w-full"
                            placeholder="Enter YouTube URL" value="{{ $id }}"/>
-                    <button class="btn btn-primary join-item rounded-r-full" id="submit">
+                    <button class="btn btn-primary join-item rounded-r-full" id="submit" wire:loading.attr="disabled">
                         Procurar
                     </button>
                 </div>
@@ -38,16 +38,36 @@
                         @foreach($infoVideo['videos'] as $video)
                             <div class="w-full p-1 flex justify-between">
                                 <p class="text-black text-sm font-bold mt-1 w-full">{{ $video['quality'] }}</p>
-                                <a
-                                    class="flex flex-col items-center"
-                                    style="cursor: pointer"
-                                    target="_blank"
-                                    href="{{ $video['url'] }}"
-                                >
-                                    <button class="btn btn-sm btn-primary join-item rounded-xl">
-                                        Download
+                                @if ($video['asAdaptive'])
+                                    <button
+                                        class="btn btn-sm btn-secondary join-item rounded-xl"
+                                        style="cursor: pointer"
+                                        onclick="{{ 'modal_' . $video['quality'] }}.showModal()"
+                                    >
+                                        Converter
                                     </button>
-                                </a>
+                                    <dialog id="modal_{{ $video['quality'] }}" class="modal modal-bottom sm:modal-middle">
+                                        <div class="modal-box">
+                                            <form method="dialog">
+                                                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                                            </form>
+                                            <h3 class="font-bold text-lg text-center">
+                                                {{ $infoVideo['title'] }}
+                                            </h3>
+                                        </div>
+                                    </dialog>
+                                @else
+                                    <a
+                                        class="flex flex-col items-center"
+                                        style="cursor: pointer"
+                                        target="_blank"
+                                        href="{{ $video['url'] }}"
+                                    >
+                                        <button class="btn btn-sm btn-primary join-item rounded-xl">
+                                            Download
+                                        </button>
+                                    </a>
+                                @endif
                             </div>
                         @endforeach
                     @endif

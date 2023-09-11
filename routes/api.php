@@ -28,9 +28,30 @@ Route::get('/search', function (Request $request) {
     $youtube = new Search();
 
     if ($youtube->isURL($query)) {
-        return $youtube->getVideoByID($youtube->getVideoId($query));
+        return $youtube->getVideoInfo($youtube->getVideoId($query));
     }
 
     $results = $youtube->YoutubeSearch($query);
     return response()->json($results);
+});
+
+Route::get('/download', function (Request $request) {
+    if (!$request->has('id')) {
+        return response()->json([
+            'message' => 'No id provided'
+        ], 422);
+    }
+    $id = $request->get('id');
+    $youtube = new Search();
+    if ($youtube->isURL($id)) {
+        $id = $youtube->getVideoId($id);
+    }
+    $downloads = $youtube->getDownload($id);
+    foreach ($downloads['videos'] as $key => $video) {
+        unset($downloads['videos'][$key]['extra']);
+    }
+    foreach ($downloads['audios'] as $key => $audio) {
+        unset($downloads['audios'][$key]['extra']);
+    }
+    return response()->json($downloads);
 });

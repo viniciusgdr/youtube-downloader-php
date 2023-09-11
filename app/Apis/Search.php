@@ -110,13 +110,44 @@ class Search
         }
 
         $json = json_decode($result, true);
+        if (!isset($json['streamingData'])) {
+            return [
+                'videos' => [],
+                'audios' => [],
+            ];
+        }
         $formats = $json['streamingData']['formats'];
         $adaptiveFormats = $json['streamingData']['adaptiveFormats'];
-        $adaptiveFormatsFiltered = array_filter($adaptiveFormats, function ($item) {
-            return isset($item['audioQuality']) && in_array($item['audioQuality'], ['AUDIO_QUALITY_LOW', 'AUDIO_QUALITY_MEDIUM', 'AUDIO_QUALITY_HIGH']);
+//        $adaptiveFormatsFiltered = array_filter($adaptiveFormats, function ($item) {
+//            return isset($item['audioQuality']) && in_array($item['audioQuality'], ['AUDIO_QUALITY_LOW', 'AUDIO_QUALITY_MEDIUM', 'AUDIO_QUALITY_HIGH']);
+//        });
+        $typesAuthorizedFormats = ['hd1080', 'large', 'tiny'];
+        $formats = array_filter($formats, function ($item) use ($typesAuthorizedFormats) {
+            if (isset($item['mimeType']) && str_contains($item['mimeType'], '3gpp')) {
+                return false;
+            }
+            return true;
         });
-        $formats = array_merge($formats, $adaptiveFormatsFiltered);
+        $adaptiveFormats = array_filter($adaptiveFormats, function ($item) use ($typesAuthorizedFormats) {
+            if (isset($item['audioQuality']) && in_array($item['audioQuality'], ['AUDIO_QUALITY_LOW', 'AUDIO_QUALITY_MEDIUM', 'AUDIO_QUALITY_HIGH'])) {
+                return true;
+            } else if (isset($item['qualityLabel']) && in_array($item['qualityLabel'], $typesAuthorizedFormats)) {
+                return true;
+            } else if (isset($item['quality']) && in_array($item['quality'], $typesAuthorizedFormats)) {
+                return true;
+            }
 
+            return false;
+        });
+
+        $adaptiveFormats = array_map(function ($item) {
+            return [
+                ...$item,
+                'asAdaptive' => true,
+            ];
+        }, $adaptiveFormats);
+
+        $formats = array_merge($formats, $adaptiveFormats);
         $results = [];
         foreach ($formats as $item) {
             $results[] = [
@@ -124,12 +155,23 @@ class Search
                 'url' => $item['url'],
                 'quality' => $item['qualityLabel'] ?? $item['audioQuality'] ?? $item['quality'] ?? null,
                 'type' => $item['mimeType'],
-                'extra' => $item
+                'extra' => $item,
+                'asAdaptive' => $item['asAdaptive'] ?? false,
             ];
         }
 
         $videos = array_filter($results, function ($item) {
             return str_contains($item['type'], 'video');
+        });
+        usort($videos, function ($a, $b) {
+            $aQuality = $a['quality'];
+            $bQuality = $b['quality'];
+            if ($aQuality === $bQuality) {
+                return 0;
+            }
+            $aQuality = str_replace('p', '', $aQuality);
+            $bQuality = str_replace('p', '', $bQuality);
+            return $aQuality > $bQuality ? -1 : 1;
         });
 
         $audios = array_filter($results, function ($item) {
